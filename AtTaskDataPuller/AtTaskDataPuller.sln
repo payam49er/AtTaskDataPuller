@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtTaskDataPuller", "AtTaskDataPuller\AtTaskDataPuller.csproj", "{7C600FB2-73DE-452B-BF11-84E8246E1C85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtTaskDataModel", "AtTaskDataModel\AtTaskDataModel.csproj", "{3ABEDB56-3D36-4F1A-9507-CC0F79D74443}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BusinessLogic", "BusinessLogic\BusinessLogic.csproj", "{7C23E340-A2C2-4D58-A102-B96E0ED33FEE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7C600FB2-73DE-452B-BF11-84E8246E1C85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C600FB2-73DE-452B-BF11-84E8246E1C85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C600FB2-73DE-452B-BF11-84E8246E1C85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C600FB2-73DE-452B-BF11-84E8246E1C85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3ABEDB56-3D36-4F1A-9507-CC0F79D74443}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3ABEDB56-3D36-4F1A-9507-CC0F79D74443}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3ABEDB56-3D36-4F1A-9507-CC0F79D74443}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3ABEDB56-3D36-4F1A-9507-CC0F79D74443}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C23E340-A2C2-4D58-A102-B96E0ED33FEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C23E340-A2C2-4D58-A102-B96E0ED33FEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C23E340-A2C2-4D58-A102-B96E0ED33FEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C23E340-A2C2-4D58-A102-B96E0ED33FEE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
