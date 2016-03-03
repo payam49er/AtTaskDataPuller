@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Runtime.ExceptionServices;
+using System.Threading.Tasks;
 using BusinessLogic.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -74,14 +76,14 @@ namespace BusinessLogic
         /// <param name="password">
         /// A <see cref="System.String"/>
         /// </param>
-        public void Login()
+        public async void Login()
         {
             if (IsSignedIn)
             {
                 throw new AtTaskException("Cannot sign in: already signed in.");
             }
             var loginData = GrabLoginInfo();
-            JToken json = client.DoLogin("/login", "username=" + loginData.Item1, "password=" + loginData.Item2);
+            JToken json = await client.DoLoginAsync("/login", "username=" + loginData.Item1, "password=" + loginData.Item2);
             sessionResponse = json["data"];
         }
 
@@ -90,13 +92,13 @@ namespace BusinessLogic
         /// Clears your current session.
         /// Throws an AtTaskException if you are not logged in.
         /// </summary>
-        public void Logout()
+        public async void Logout()
         {
             if (!IsSignedIn)
             {
                 throw new AtTaskException("Cannot log out: not signed in.");
             }
-            client.DoLogin("/logout", "sessionID=" + SessionID);
+            await client.DoLoginAsync("/logout", "sessionID=" + SessionID);
             sessionResponse = null;
         }
 
@@ -163,37 +165,46 @@ namespace BusinessLogic
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public bool IsValidJson(string input)
+        public async Task<bool> IsValidJsonAsync(string input)
         {
             try
             {
-                JToken.Parse(input);
-                return true;
+                var validationResult = Task.Factory.StartNew(() =>
+                {
+                    JToken.Parse(input);
+                    return true;
+                });
+
+                return await validationResult;
             }
             catch (JsonReaderException jsonReaderException)
             {
                 Console.WriteLine(jsonReaderException.Message);
-                return false;
+                return await Task.FromResult(false);
             }
         }
 
-        public double CountOfRecords(ObjCode objCode, object parameters)
+        public async Task<double> CountOfRecordsAsync(ObjCode objCode, object parameters)
         {
-            string request = BuildRequest(objCode, parameters, Operation.Operations.Count);
-            JToken count = MakeRequest(request);
-            return count.SelectToken("data.count").Value<double>();
+            var countResult = Task.Factory.StartNew(async () =>
+            {
+                string request = await BuildRequestAsync(objCode, parameters, Operation.Operations.Count);
+                JToken count = await MakeRequestAsync(request);
+                return count.SelectToken("data.count").Value<double>();
+            });
+            return await countResult.Result;
         }
 
-        public void Paginate(ObjCode objcode, object parameters, int limit = 2000)
+        public async void Paginate(ObjCode objcode, object parameters, int limit = 2000)
         {
             //todo:I have to fix this in a different way. Do not buggle up Search method 
-            double totalCount = CountOfRecords(objcode, parameters);
+            double totalCount = await CountOfRecordsAsync(objcode, parameters);
             int pages = (int) totalCount/limit;
             int reminder = (int) totalCount%limit;
             for (int i = 0; i < pages; i++)
             {
-                string request = BuildRequest(objcode, parameters, Operation.Operations.Search);
-                MakeRequest(request);
+                string request = await BuildRequestAsync(objcode, parameters, Operation.Operations.Search);
+                await MakeRequestAsync(request);
             }
 
         }
@@ -206,48 +217,57 @@ namespace BusinessLogic
         /// <param name="parameters"></param>
         /// <param name="operationType"></param>
         /// <returns></returns>
-        public string BuildRequest(ObjCode objCode, object parameters, Operation.Operations operationType)
+        public async Task<string> BuildRequestAsync(ObjCode objCode, object parameters, Operation.Operations operationType)
         {
-            string[] fieldsToInclude = parameterObjectToStringArray(parameters, "sessionID=" + SessionID);
-
-            string path = null;
-
-            switch (operationType)
+            var requestResult = Task.Factory.StartNew(async () =>
             {
-                case Operation.Operations.Search:
-                    path = string.Format("/{0}/search", objCode);
-                    break;
-                case Operation.Operations.Post:
-                    path = string.Format("/{0}/post", objCode);
-                    break;
-                case Operation.Operations.Delete:
-                    path = string.Format("/{0}/delete", objCode);
-                    break;
-                case Operation.Operations.Put:
-                    path = string.Format("/{0}/put", objCode);
-                    break;
-                case Operation.Operations.Count:
-                    path = string.Format("/{0}/count", objCode);
-                    break;
-                default: //the case for the Get, the default operation
-                    break;
-            }
+                string[] fieldsToInclude = parameterObjectToStringArray(parameters, "sessionID=" + SessionID);
+
+                string path = null;
+
+                switch (operationType)
+                    {
+                    case Operation.Operations.Search:
+                        path = string.Format("/{0}/search", objCode);
+                        break;
+                    case Operation.Operations.Post:
+                        path = string.Format("/{0}/post", objCode);
+                        break;
+                    case Operation.Operations.Delete:
+                        path = string.Format("/{0}/delete", objCode);
+                        break;
+                    case Operation.Operations.Put:
+                        path = string.Format("/{0}/put", objCode);
+                        break;
+                    case Operation.Operations.Count:
+                        path = string.Format("/{0}/count", objCode);
+                        break;
+                    default: //the case for the Get, the default operation
+                        break;
+                    }
 
 
-            if (!string.IsNullOrEmpty(path) && !path.StartsWith("/"))
-            {
-                path = "/" + path;
-            }
-            _log.LogIt(string.Format("Request is created as {0}",
-                client.url + path + client.ToQueryString(fieldsToInclude)));
-            return client.url + path + client.ToQueryString(fieldsToInclude);
+                if (!string.IsNullOrEmpty(path) && !path.StartsWith("/"))
+                    {
+                    path = "/" + path;
+                    }
+                _log.LogIt(string.Format("Request is created as {0}",
+                    client.url + path + await client.ToQueryStringAsync(fieldsToInclude)));
+                return client.url + path + await client.ToQueryStringAsync(fieldsToInclude);
+            });
+            return await requestResult.Result;
         }
 
 
-        public JToken MakeRequest(string request)
+        public async Task<JToken> MakeRequestAsync(string request)
         {
-            VerifySignedIn();
-            return client.DoRequest(request);
+            var requestResult = Task.Factory.StartNew(async () =>
+            {
+                VerifySignedIn();
+                return await client.DoRequestAsync(request);
+            });
+
+            return await requestResult.Result;
         }
     }
 }

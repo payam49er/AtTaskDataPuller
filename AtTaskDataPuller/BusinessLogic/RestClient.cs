@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace BusinessLogic
@@ -37,18 +38,21 @@ namespace BusinessLogic
         /// <param name="path"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        public JToken DoLogin(string path, params string[] parameters)
+        public async Task<JToken> DoLoginAsync(string path, params string[] parameters)
         {
-            List<string> list = parameters.ToList();
-            list.Insert(0, "method=post");
-
-            if (!path.StartsWith("/"))
+            var request = Task.Factory.StartNew(() =>
             {
-                path = "/" + path;
-            }
-            string fullUrl = url + path + ToQueryString(parameters);
+                List<string> list = parameters.ToList();
+                list.Insert(0, "method=post");
 
-            return DoRequest(fullUrl);
+                if (!path.StartsWith("/"))
+                {
+                    path = "/" + path;
+                }
+                return url + path + ToQueryStringAsync(parameters);
+            });
+
+            return await DoRequestAsync(request.Result);
         }
 
 
@@ -57,18 +61,22 @@ namespace BusinessLogic
         /// </summary>
         /// <param name="fullUrl"></param>
         /// <returns></returns>
-        public JToken DoRequest(string fullUrl)
+        public async Task<JToken> DoRequestAsync(string fullUrl)
         {
-            if (DebugUrls) Console.WriteLine("Requesting: {0}", fullUrl);
-
-            WebRequest request = HttpWebRequest.CreateDefault(new Uri(fullUrl));
-            using (WebResponse response = request.GetResponse())
+            var requestResult = Task.Factory.StartNew(() =>
             {
-                using (Stream responseStream = response.GetResponseStream())
-                {
-                    return ReadResponse(responseStream);
-                }
-            }
+                if (DebugUrls) Console.WriteLine("Requesting: {0}", fullUrl);
+
+                WebRequest request = HttpWebRequest.CreateDefault(new Uri(fullUrl));
+                using (WebResponse response = request.GetResponse())
+                    {
+                    using (Stream responseStream = response.GetResponseStream())
+                        {
+                        return ReadResponseAsync(responseStream);
+                        }
+                    }
+            });
+            return await requestResult.Result;
         }
 
         /// <summary>
@@ -77,16 +85,22 @@ namespace BusinessLogic
         /// <returns>
         /// If the parameters array contains ["item1", "item2"] the result will be "?item1&item2"
         /// </returns>
-        public string ToQueryString(string[] parameters, int limit = 100)
+        public async Task<string> ToQueryStringAsync(string[] parameters, int limit = 100)
         {
-            StringBuilder sb = new StringBuilder();
-            parameters.ToList().ForEach(s => sb.Append(s).Append("&"));
-            if (sb.Length > 0)
+            var queryStringResult = Task.Factory.StartNew(() =>
             {
-                sb.Remove(sb.Length - 1, 1);
-            }
+                StringBuilder sb = new StringBuilder();
+                parameters.ToList().ForEach(s => sb.Append(s).Append("&"));
+                if (sb.Length > 0)
+                {
+                    sb.Remove(sb.Length - 1, 1);
+                }
 
-            return limit > 100 ? "&" + sb : "?" + sb;
+               return limit > 100 ? "&" + sb : "?" + sb;
+            });
+
+
+            return await queryStringResult;
         }
 
 
@@ -100,11 +114,16 @@ namespace BusinessLogic
         /// <returns>
         /// A <see cref="JToken"/>
         /// </returns>
-        private JToken ReadResponse(Stream stream)
+        private async Task<JToken> ReadResponseAsync(Stream stream)
         {
-            StreamReader reader = new StreamReader(stream);
-            string body = reader.ReadToEnd();
-            return JObject.Parse(body);
+            var responseResult = Task.Factory.StartNew(() =>
+            {
+                StreamReader reader = new StreamReader(stream);
+                string body = reader.ReadToEnd();
+                return JObject.Parse(body);
+            });
+
+            return await responseResult;
         }
 
     }

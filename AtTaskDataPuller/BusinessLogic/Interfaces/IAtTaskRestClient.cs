@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace BusinessLogic.Interfaces
 {
@@ -9,7 +10,7 @@ namespace BusinessLogic.Interfaces
         /// </summary>
         bool IsSignedIn { get; }
 
-        double CountOfRecords(ObjCode objCode, object parameters);
+        Task<double> CountOfRecordsAsync(ObjCode objCode, object parameters);
         void Paginate(ObjCode objcode, object parameters, int limit = 2000);
 
         /// <summary>
@@ -19,8 +20,8 @@ namespace BusinessLogic.Interfaces
         /// <param name="parameters"></param>
         /// <param name="operationType"></param>
         /// <returns></returns>
-        string BuildRequest(ObjCode objCode, object parameters, Operation.Operations operationType);
+        Task<string> BuildRequestAsync(ObjCode objCode, object parameters, Operation.Operations operationType);
 
-        JToken MakeRequest(string request);
+        Task<JToken> MakeRequestAsync(string request);
     }
 }
